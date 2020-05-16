@@ -1,0 +1,163 @@
+html > body {
+  font-family: "Cairo", sans-serif;
+}
+
+html,
+#root,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0px;
+}
+
+.App {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.App_login-screen {
+  height: 100%;
+  width: 100%;
+  background-color: #004384;
+  color: #ffffff;
+  text-align: center;
+  padding-top: 20%;
+}
+
+.App_login-screen img {
+  margin-bottom: 3%;
+}
+
+.App_login-screen .App_login-screen_app-name {
+  font-size: 1.4em;
+}
+
+.App_login-screen #sign-in {
+  margin-top: 5%;
+}
+
+.App_login-screen #sign-in > div {
+  margin: auto;
+}
+
+.App header {
+  height: 60px;
+  background-color: #004384;
+  width: 100%;
+  color: #ffffff;
+}
+
+.App header .App_logo {
+  margin: 10px;
+  height: 40px;
+  float: left;
+}
+
+.App header .App_logo img {
+  height: 100%;
+}
+
+.App header .App_name {
+  height: 100%;
+  float: left;
+  line-height: 60px;
+  font-size: 1.4em;
+}
+
+.App_filters {
+  flex-grow: 0.4;
+  width: 100%;
+  background: #f2f2f2;
+  overflow: auto;
+}
+
+.App_dashboard {
+  flex-grow: 0.6;
+  width: 100%;
+  overflow: auto;
+}
+
+.App_footer {
+  height: 40px;
+  width: 100%;
+  background: #f2f2f2;
+  overflow: hidden;
+}
+
+.App_footer_body {
+  float: right;
+  overflow: hidden;
+}
+
+.App_footer_body_label,
+.App_footer_body_action {
+  float: left;
+}
+
+/*********** Filters *****************/
+
+.Filters {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.Filters_label {
+  height: 20px;
+}
+
+.Filters_list {
+  flex-grow: 1;
+}
+
+.Filters_actions {
+  height: 40px;
+}
+
+.Filters_actions button {
+  float: right;
+  margin: 5px;
+}
+
+/*********** Dashboard *****************/
+
+.Dashboard,
+.Dashboard_subsets {
+  height: 100%;
+  width: 100%;
+}
+
+.Subset {
+  width: 29.33%;
+  margin-left: 3%;
+  margin-top: 3%;
+  height: 100px;
+  float: left;
+}
+
+.Subset_body {
+  margin: 2%;
+  border: 1px solid #ddd;
+  height: 92%;
+  width: 92%;
+  text-align: center;
+  padding: 2%;
+  cursor: pointer;
+}
+
+.Subset_body:hover {
+  background-color: #e0f3f3;
+}
+
+.Subset_body_count {
+  font-size: 3em;
+  font-weight: bold;
+}
+
+.Subset.highlighted .Subset_body {
+  color: #ffffff;
+  background-color: teal;
+}
