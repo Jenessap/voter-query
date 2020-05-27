@@ -1,15 +1,31 @@
 import React from "react";
 import "./styles.css";
 import Google from "./Google";
-import { Button, Tag } from "@blueprintjs/core";
+import {
+  Button,
+  Tag,
+  Dialog,
+  Classes,
+  Intent,
+  Checkbox,
+  InputGroup,
+  FormGroup,
+  AnchorButton,
+  Position
+} from "@blueprintjs/core";
 import "../node_modules/normalize.css/normalize.css";
 import "../node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css";
 import "../node_modules/@blueprintjs/core/lib/css/blueprint.css";
+import "../node_modules/@blueprintjs/datetime/lib/css/blueprint-datetime.css";
 import { Suggest } from "@blueprintjs/select";
+import { DateInput } from "@blueprintjs/datetime";
+import { v4 as uuidv4 } from "uuid";
 import {
   prepareSQLClauses,
   constructQueryForExport,
-  constructQueryForSubsetCount
+  constructQueryForSubsetCount,
+  nonValueOperators,
+  multiValueOperators
 } from "./Query";
 
 const logicOptions = {
@@ -20,87 +36,47 @@ const logicOptions = {
     { id: "<", title: "less than" },
     { id: "<=", title: "less than or equal to" },
     { id: "IN", title: "is one of" },
-    { id: "!=", title: "is not" }
-    // {id: 'null', title: 'is empty'},
-    // {id: 'set', title: 'is not empty'}
+    { id: "NOT IN", title: "is not one of" },
+    { id: "!=", title: "is not" },
+    { id: "BETWEEN", title: "is between" },
+    { id: "NOT BETWEEN", title: "is not between" },
+    { id: "IS NULL", title: "is not set" },
+    { id: "IS NOT NULL", title: "is set" }
   ],
 
   STRING: [
-    { id: "=", title: "is exactly" },
-    // {id: 'starts', title: 'starts with'},
-    // {id: 'ends', title: 'ends with'},
-    // {id: 'contains', title: 'contains'},
-    // {id: 'icontains', title: 'contains (case-insensitive)'},
+    { id: "=", title: "is" },
+    { id: "LIKE%", title: "starts with" },
+    { id: "%LIKE", title: "ends with" },
+    //{ id: "icontains", title: "contains (case-insensitive)" },
+    { id: "%LIKE%", title: "contains" },
+    { id: "NOT %LIKE%", title: "does not contain" },
     { id: "IN", title: "is one of" },
-    { id: "!=", title: "is not" }
-    // {id: 'notcontains', title: 'does not contain'},
-    // {id: 'null', title: 'is empty'},
-    // {id: 'set', title: 'is not empty'}
+    { id: "NOT IN", title: "is not one of" },
+    { id: "!=", title: "is not" },
+    { id: "IS ''", title: "is empty" },
+    { id: "!= ''", title: "is not empty" },
+    { id: "IS NOT NULL", title: "is set" },
+    { id: "IS NULL", title: "is not set" }
   ],
 
   BOOLEAN: [
-    { id: "=", title: "is" }
-    // {id: 'true', title: 'is true'},
-    // {id: 'false', title: 'is false'},
-    // {id: 'null', title: 'is empty'},
-    // {id: 'set', title: 'is not empty'}
+    { id: "=", title: "is" },
+    { id: "IS TRUE", title: "is true" },
+    { id: "IS FALSE", title: "is false" },
+    { id: "IS NOT NULL", title: "is set" },
+    { id: "IS NULL", title: "is not set" }
   ],
 
   DATE: [
     { id: "<", title: "is before" },
-    { id: ">", title: "is after" }
-    // {id: 'between', title: 'is between'}
-    // {id: 'null', title: 'is empty'},
-    // {id: 'set', title: 'is not empty'}
+    { id: ">", title: "is after" },
+    { id: "BETWEEN", title: "is between" },
+    { id: "NOT BETWEEN", title: "is not between" },
+    { id: "IS NOT NULL", title: "is set" },
+    { id: "IS NULL", title: "is not set" }
   ]
 };
-// Number:
-// - {id: 'equal', title: 'equal to'}
-// - {id: 'greater', title: 'greather than' }
-// - {id: 'greaterequal': title: 'greater than or equal to'}
-// - {id: 'less', title: 'less than'},
-// - {id: 'lessequal', title: 'less than or equal to'}
-// - {id: 'in', title: 'is one of'}
-// - {id: 'null', title: 'is empty'}
-// - {id: 'set', title: 'is not empty'}
-// String:
-// - {id: 'is', title: 'is exactly'}
-// - {id: 'starts', title: 'starts with'}
-// - {id: 'ends', title: 'ends with'}
-// - {id: 'contains', title: 'contains'}
-// - {id: 'icontains', title: 'contains (case-insensitive)'}
-// - {id: 'in', title: 'is one of'}
-// - {id: 'is not', title: 'is not'}
-// - {id: 'notcontains', title: 'does not contain'}
-// - {id: 'null', title: 'is empty'}
-// - {id: 'set', title: 'is not empty'}
-// Boolean:
-// - {id: 'true', title: 'is true'}
-// - {id: 'false', title: 'is false'}
-// - {id: 'null', title: 'is empty'}
-// - {id: 'set', title: 'is not empty'}
-// Date:
-// - {id: 'before', title: 'is before'}
-// - {id: 'after', title: 'is after'}
-// - {id: 'between', title: 'is between'}
-// - {id: 'null', title: 'is empty'}
-// - {id: 'set', title: 'is not empty'}
-
-/*
-
-
-
-
-
-<!-- <App> onExportClick() -->
-// Meanwhile, keep the user loading through some spinner.
-this.setState({ exporting: true });
-Google.export(sql).then(url => {
-    this.setState({ exporting: false });
-    // Make the url downloadable through a button click.
-});
-
-*/
 
 export default class App extends React.Component {
   constructor(props) {
@@ -110,119 +86,153 @@ export default class App extends React.Component {
       subsets: [
         {
           id: "all",
-          name: "Is from the Goober family",
-          field: { name: "Last_Name", type: "STRING" },
-          logic: "=",
-          value: "Goober",
+          name: "Matching the above filters (all)",
+          field: null,
+          logic: null,
+          value: null,
           subfilters: null
         },
         {
           id: "1",
-          name: "Is a bumbles",
-          field: { name: "First_Name", type: "STRING" },
-          logic: "=",
-          value: "Bumbles",
-          subfilters: null
-        },
-        // {
-        //   id: "2",
-        //   name: "Second",
-        //   field: { name: "Birth_Date", type: "DATE" },
-        //   logic: ">",
-        //   value: 10,
-        //   subfilters: null
-        // },
-        {
-          id: "3",
-          name: "Republic party preference",
+          name: "Registered Democrat",
           field: { name: "Party", type: "STRING" },
           logic: "=",
-          value: "Republican",
+          value: "",
+          subfilters: null
+        },
+        {
+          id: "2",
+          name: "Registered after Jan. 1st, 2018",
+          field: { name: "Birth_Date", type: "DATE" },
+          logic: ">",
+          value: new Date("2018-01-01"),
+          subfilters: null
+        },
+        {
+          id: "3",
+          name: "65 or older",
+          field: { name: "Birth_Date", type: "DATE" },
+          logic: "<",
+          value: new Date("1955-05-16"),
           subfilters: null
         },
         {
           id: "4",
-          name: "Does not vote for a random unknown party",
+          name: "Registered Green, Non-Partisan, or Libertarian Party",
           field: { name: "Party", type: "STRING" },
           logic: "IN",
-          value: ["Democrat", "Green", "Republican"],
+          value: ["Green", "Non-Partisan", "Libertarian Party"],
           subfilters: null
         }
       ],
-      subsetHighlighted: "1",
+      subsetHighlighted: "all",
       filters: [
         {
           count: null,
-          field: { name: "County", type: "STRING" },
+          field: { name: "County_Status", type: "STRING" },
           logic: "=",
-          value: "Lander",
+          value: "Active",
+          subfilters: null
+        },
+        {
+          count: null,
+          field: { name: "Address_1", type: "STRING" },
+          logic: "!=",
+          value: "",
           subfilters: null
         }
-        // {
-        //   count: null,
-        //   field: { name: "First_Name", type: "STRING" },
-        //   logic: "=",
-        //   value: "Jen",
-        //   subfilters: null
-        // }
       ],
       subsetCounts: {},
 
       fields: [
-        { name: "VoterID", type: "STRING" },
-        { name: "First_Name", type: "STRING" },
-        { name: "Address_1", type: "STRING" },
         { name: "County", type: "STRING" },
+        { name: "First_Name", type: "STRING" },
+        { name: "Middle_Name", type: "STRING" },
+        { name: "Last_Name", type: "STRING" },
+        { name: "Suffix", type: "STRING" },
         { name: "Birth_Date", type: "DATE" },
+        { name: "Registration_Date", type: "DATE" },
+        { name: "Address_1", type: "STRING" },
+        { name: "Address_2", type: "STRING" },
+        { name: "City", type: "STRING" },
+        { name: "State", type: "STRING" },
+        { name: "Zip", type: "STRING" },
+        { name: "Phone", type: "STRING" },
         { name: "Party", type: "STRING" },
-        { name: "IDRequired", type: "BOOLEAN" },
-        { name: "Children_Count", type: "INTEGER" }
+        { name: "Congressional_District", type: "STRING" },
+        { name: "Assembly_District", type: "STRING" },
+        { name: "ID_Required", type: "BOOLEAN" }
       ],
+
       columns: [
-        "VoterID",
-        "First_Name",
-        "Address",
         "County",
+        "First_Name",
+        "Middle_Name",
+        "Last_Name",
+        "Suffix",
         "Birth_Date",
+        "Registration_Date",
+        "Address_1",
+        "Address_2",
+        "City",
+        "State",
+        "Zip",
+        "Phone",
         "Party",
-        "IDRequired",
-        "Children_Count"
+        "Congressional_District",
+        "Senate_District",
+        "Assembly_District",
+        "Education_District",
+        "Regent_District",
+        "Registered_Precinct",
+        "County_Status",
+        "County_Voter_ID",
+        "ID_Required"
       ],
       totalRecords: null
       // countFilterOpen: {state:false, ?}
     };
     // Funtions sent to <Dashboard>.
     this.changeSubsetHighlighted = this.changeSubsetHighlighted.bind(this);
+    this.addEditSubset = this.addEditSubset.bind(this);
+    this.closeAddEditSubset = this.closeAddEditSubset.bind(this);
+    this.removeSubset = this.removeSubset.bind(this);
+    this.onSubsetDone = this.onSubsetDone.bind(this);
+
     // Functions sent to <Filters>.
     this.onFilterChange = this.onFilterChange.bind(this);
     this.addRegularFilter = this.addRegularFilter.bind(this);
     this.addCountFilter = this.addCountFilter.bind(this);
     this.removeFilter = this.removeFilter.bind(this);
     this.openCountFilter = this.openCountFilter.bind(this);
+    this.closeCountFilterPopup = this.closeCountFilterPopup.bind(this);
+
     // Functions sent to <Export Options>.
     this.onExportClick = this.onExportClick.bind(this);
     this.closeExportPopup = this.closeExportPopup.bind(this);
     this.search = this.search.bind(this);
     this.onExportConfirm = this.onExportConfirm.bind(this);
   }
-  // prepareSQLClauses,
-  // constructQueryForExport,
-  // constructQueryForSubsetCount
 
-  onExportConfirm() {
+  onExportConfirm(columns) {
     var clauses = prepareSQLClauses(
       this.state.filters.filter(filter => !filter.count),
-      this.state.columns,
+      columns,
       this.state.filters.find(filter => filter.count)
     );
     // TODO attach to api rather than console.log
-    console.log(
-      constructQueryForExport(
-        this.state.subsets,
-        this.state.subsetHighlighted,
-        clauses
-      )
+    var query = constructQueryForExport(
+      this.state.subsets,
+      this.state.subsetHighlighted,
+      clauses
     );
+
+    // Meanwhile, keep the user loading through some spinner.
+    this.setState({ exporting: true });
+    Google.export(query).then(url => {
+      // Make the url downloadable through a button click.
+      this.setState({ exporting: false, url, exportOpen: false });
+    });
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -230,6 +240,14 @@ export default class App extends React.Component {
       Google.getColumns().then(({ fields, numRows }) => {
         this.setState({ fields: fields, totalRecords: numRows });
       });
+    }
+
+    if (!prevState.addEditSubsetOpen && this.state.addEditSubsetOpen) {
+      // Connect change in value from Firebase.
+    }
+
+    if (prevState.addEditSubsetOpen && !this.state.addEditSubsetOpen) {
+      // Disconnect Firebase.
     }
   }
 
@@ -242,39 +260,32 @@ export default class App extends React.Component {
     }
   }
 
-  // Google.getCount(sql).then(count => {
-  //     // Store it in a state of a object mapping from subsetID -> count.
-  // });
   search() {
     var clauses = prepareSQLClauses(
       this.state.filters.filter(filter => !filter.count),
       this.state.columns,
       this.state.filters.find(filter => filter.count)
     );
-    console.log(clauses);
-    // TODO attach to api rather than console.log
+
     var query;
     var newSubsetCounts = this.state.subsetCounts;
     Promise.all(
-      this.state.subsets.map((subset, i) => {
-        query = constructQueryForSubsetCount(
-          this.state.subsets,
-          subset.id,
-          clauses
-        );
-        console.log(query);
-        return Google.getCount(query).then(count => {
-          // Store it in a state of a object mapping from subsetID -> count.
-          newSubsetCounts[subset.id] = count;
-        });
-      })
+    this.state.subsets.map(subset => {
+      query = constructQueryForSubsetCount(
+        this.state.subsets,
+        subset.id,
+        clauses
+      );
+      return Google.getCount(query).then(count => {
+        newSubsetCounts[subset.id] = count;
+      });
+    })
     ).then(() => {
       this.setState({ subsetCounts: newSubsetCounts });
     });
   }
 
   changeSubsetHighlighted(subsetHighlighted) {
-    console.log(subsetHighlighted);
     this.setState({ subsetHighlighted: subsetHighlighted });
   }
 
@@ -294,26 +305,81 @@ export default class App extends React.Component {
     });
     this.setState({ filters: newFilters });
   }
+
   addCountFilter() {
-    var newFilters = this.state.filters;
-    newFilters.push({
-      count: 1,
-      field: null,
-      logic: null,
-      value: null,
-      subfilters: null
-    });
+    var newFilters = this.state.filters,
+      newFilter = {
+        count: 1,
+        field: null,
+        logic: null,
+        value: null,
+        subfilters: null
+      };
+
+    newFilters.push(newFilter);
+
     this.setState({ filters: newFilters });
-    this.openCountFilter();
+    this.openCountFilter(newFilter);
   }
+
   removeFilter(index) {
     var splicedFilters = this.state.filters;
     splicedFilters.splice(index, 1);
     this.setState({ filters: splicedFilters });
   }
-  openCountFilter() {}
-  onExportClick() {}
-  closeExportPopup() {}
+
+  openCountFilter(filter, index) {
+    this.setState({ countFilterOpen: { filter, index } });
+  }
+
+  onExportClick() {
+    this.setState({ exportOpen: true, url: false });
+  }
+
+  closeExportPopup() {
+    this.setState({ exportOpen: false });
+  }
+
+  closeCountFilterPopup() {
+    this.setState({ countFilterOpen: null });
+  }
+
+  addEditSubset(index) {
+    if (index && typeof index === Number) {
+    } else {
+      var newSubset = {
+        id: uuidv4(),
+        count: null,
+        name: null,
+        field: null,
+        logic: null,
+        value: null,
+        subfilters: null
+      };
+
+      this.setState({
+        addEditSubsetOpen: {
+          index: this.state.subsets.length,
+          subset: newSubset
+        }
+      });
+      // TODO: Add subset to Firebase.
+    }
+  }
+
+  closeAddEditSubset() {
+    this.setState({ addEditSubsetOpen: null });
+  }
+
+  onSubsetDone(id, keysValues) {
+    // TODO: Update subset on Firebase.
+
+    this.closeAddEditSubset();
+  }
+
+  removeSubset() {
+    // TODO: Remove subset in Firebase.
+  }
 
   render() {
     if (!this.state.loggedIn)
@@ -355,6 +421,15 @@ export default class App extends React.Component {
             subsets={this.state.subsets}
             highlighted={this.state.subsetHighlighted}
             subsetClicked={this.changeSubsetHighlighted}
+            addEditSubset={this.addEditSubset}
+            removeSubset={this.removeSubset}
+            closeAddSubset={this.closeAddEditSubset}
+          />
+          <SubsetEditor
+            open={this.state.addEditSubsetOpen}
+            onDone={this.onSubsetDone}
+            onClose={this.closeAddEditSubset}
+            fields={this.state.fields}
           />
         </div>
         <div className="App_footer">
@@ -366,19 +441,21 @@ export default class App extends React.Component {
               <Button
                 icon="export"
                 intent="success"
-                onClick={this.onExportConfirm}
+                onClick={this.onExportClick}
               >
                 Export to CSV
               </Button>
             </div>
           </div>
         </div>
-        <ExportOptions
-          columns={this.state.columns}
+        <Export
+          fields={this.state.fields}
           onExportClick={this.onExportClick}
-          exportOpen={this.state.exportOpen}
-          close={this.closeExportPopup}
+          open={this.state.exportOpen}
+          onClose={this.closeExportPopup}
           onExportConfirm={this.onExportConfirm}
+          exporting={this.state.exporting}
+          url={this.state.url}
         />
         <CountFilterPopup
           fields={this.state.fields}
@@ -386,7 +463,7 @@ export default class App extends React.Component {
           removeFilter={this.removeFilter}
           addRegularFilter={this.addRegularFilter}
           open={this.state.countFilterOpen}
-          close={this.closeCountFilterPopup}
+          onClose={this.closeCountFilterPopup}
         />
       </div>
     );
@@ -421,15 +498,17 @@ class Filters extends React.Component {
           >
             Add filter
           </Button>
-          <Button
-            icon="insert"
-            intent="warning"
-            minimal={true}
-            large={true}
-            onClick={this.props.addCountFilter}
-          >
-            Add count filter
-          </Button>
+          {!this.props.filters.find(filter => filter.count) ? (
+            <Button
+              icon="insert"
+              intent="warning"
+              minimal={true}
+              large={true}
+              onClick={this.props.addCountFilter}
+            >
+              Add count filter
+            </Button>
+          ) : null}
         </div>
         <div className="Filters_actions">
           <Button icon="search" onClick={this.props.onSearchClick}>
@@ -449,11 +528,13 @@ class Filter extends React.Component {
     this.onLogicChange = this.onLogicChange.bind(this);
     this.onValueChange = this.onValueChange.bind(this);
     this.onRemove = this.onRemove.bind(this);
+    this.open = this.open.bind(this);
   }
 
   // I think this part is the most important.
-  onRemove() {
+  onRemove(event) {
     this.props.removeFilter(this.props.index);
+    event.stopPropagation();
   }
 
   buildAndChangeFilter(change) {
@@ -473,10 +554,25 @@ class Filter extends React.Component {
   onValueChange(value) {
     this.buildAndChangeFilter(["value", value]);
   }
+
+  open() {
+    if (this.props.filter.count) {
+      this.props.openCountFilter(this.props.filter, this.props.index);
+    }
+  }
+
   render() {
-    // console.log("This is it: ", this.props.filter)
+    var isCountFilter = this.props.filter.count;
+
     return (
-      <Tag large={true} onRemove={this.onRemove} round={true} intent="primary">
+      <Tag
+        large={true}
+        onRemove={this.props.removeFilter ? this.onRemove : null}
+        round={true}
+        intent={isCountFilter ? "warning" : "primary"}
+        onClick={this.open}
+        interactive={isCountFilter}
+      >
         {!this.props.filter.count ? (
           <span>
             <Field
@@ -495,9 +591,20 @@ class Filter extends React.Component {
               onChange={this.onValueChange}
               selected={this.props.filter.value}
               field={this.props.filter.field}
+              logic={this.props.filter.logic}
             />
           </span>
-        ) : null}
+        ) : (
+          <span>
+            {isCountFilter} record(s)
+            {this.props.filter.subfilters
+              ? " for fields " +
+                this.props.filter.subfilters
+                  .map(f => (f.field ? f.field.name : "(unnamed)"))
+                  .join(", ")
+              : ""}
+          </span>
+        )}
       </Tag>
     );
   }
@@ -514,7 +621,11 @@ class Field extends React.Component {
   }
 
   renderOption(item, stuff) {
-    return <div onClick={stuff.handleClick}>{item.name}</div>;
+    return (
+      <div key={item.name} onClick={stuff.handleClick}>
+        {item.name}
+      </div>
+    );
   }
 
   renderInputValue(input) {
@@ -574,21 +685,95 @@ class Value extends React.Component {
   constructor(props) {
     super(props);
     this.onChange = this.onChange.bind(this);
+    this.handleDateChange = this.handleDateChange.bind(this);
+    this.handIeIndividualDateChange = this.handIeIndividualDateChange.bind(
+      this
+    );
+    this.renderDates = this.renderDates.bind(this);
   }
 
   onChange(event) {
-    this.props.onChange(event.target.value);
+    var value = event.target.value;
+    if (["IN", "NOT IN"].indexOf(this.props.logic) !== -1) {
+      value = value.split(",").map(v => v.trim());
+
+      if (this.props.field.type === "INTEGER") {
+        value = value.map(v => parseInt(v, 10));
+      }
+    }
+
+    this.props.onChange(value);
   }
+
+  handleDateChange(date) {
+    this.props.onChange(date);
+  }
+
+  handIeIndividualDateChange(index, date) {
+    var datePair = this.props.selected;
+    if (!datePair) datePair = [];
+
+    datePair[index] = date;
+    this.handleDateChange(datePair);
+  }
+
+  renderDates() {
+    var dateProps = {
+      popoverProps: { position: Position.BOTTOM },
+      shortcuts: true,
+      closeOnSelection: true,
+      formatDate: date => (date == null ? "" : date.toLocaleDateString()),
+      parseDate: str => (str ? new Date(Date.parse(str)) : new Date())
+    };
+
+    if (multiValueOperators.indexOf(this.props.logic) === -1) {
+      return (
+        <DateInput
+          {...dateProps}
+          onChange={this.handleDateChange}
+          value={
+            !this.props.selected instanceof Array && this.props.selected
+              ? this.props.selected
+              : new Date()
+          }
+        />
+      );
+    } else {
+      var selectedIsSet =
+        this.props.selected && this.props.selected instanceof Array;
+      return [
+        <DateInput
+          key={0}
+          {...dateProps}
+          onChange={this.handIeIndividualDateChange.bind(this, 0)}
+          value={selectedIsSet ? this.props.selected[0] : new Date()}
+        />,
+        <span key={1}> AND </span>,
+        <DateInput
+          key={2}
+          {...dateProps}
+          onChange={this.handIeIndividualDateChange.bind(this, 1)}
+          value={selectedIsSet ? this.props.selected[1] : new Date()}
+        />
+      ];
+    }
+  }
+
   render() {
     return (
       <span>
-        {this.props.field ? (
-          <input
-            type="text"
-            class="bp3-input"
-            value={this.props.selected}
-            onChange={this.onChange}
-          />
+        {this.props.field &&
+        nonValueOperators.indexOf(this.props.logic) === -1 ? (
+          this.props.field.type === "DATE" ? (
+            this.renderDates()
+          ) : (
+            <input
+              type="text"
+              className="bp3-input"
+              value={this.props.selected}
+              onChange={this.onChange}
+            />
+          )
         ) : null}
       </span>
     );
@@ -599,27 +784,114 @@ class CountFilterPopup extends React.Component {
   constructor(props) {
     super(props);
     this.onClickDone = this.onClickDone.bind(this);
-    this.onClickClose = this.onClickClose.bind(this);
+    this.onSubfilterChange = this.onSubfilterChange.bind(this);
+    this.removeSubfilter = this.removeSubfilter.bind(this);
+    this.addSubfilter = this.addSubfilter.bind(this);
+    this.onCountChange = this.onCountChange.bind(this);
   }
 
   onClickDone() {
     // this.props.buildFilter(this.props.subset.id);
   }
-  onClickClose() {
-    // this.props.buildFilter(this.props.subset.id);
+
+  onSubfilterChange(index, subfilter) {
+    var updatedFilter = this.props.open.filter;
+    updatedFilter.subfilters[index] = subfilter;
+    this.props.onFilterChange(this.props.open.index, updatedFilter);
   }
+
+  removeSubfilter(index) {
+    var updatedFilter = this.props.open.filter;
+    updatedFilter.subfilters.splice(index, 1);
+    this.props.onFilterChange(this.props.open.index, updatedFilter);
+  }
+
+  addSubfilter() {
+    var updatedFilter = this.props.open.filter;
+
+    if (!updatedFilter.subfilters) updatedFilter.subfilters = [];
+
+    updatedFilter.subfilters.push({
+      count: null,
+      field: null,
+      logic: null,
+      value: null,
+      subfilters: null
+    });
+    this.props.onFilterChange(this.props.open.index, updatedFilter);
+  }
+
+  onCountChange(event) {
+    var updatedFilter = this.props.open.filter;
+    updatedFilter.count = parseInt(event.target.value, 10);
+    this.props.onFilterChange(this.props.open.index, updatedFilter);
+  }
+
   render() {
     return (
       <div>
-        {/*<div>CountFilterPopup - Question?</div>*/}
-        {this.props.open ? (
-          <Filter
-            filter={this.props.open}
-            fields={this.props.fields}
-            onFilterChange={this.props.onFilterChange}
-            removeFilter={this.props.removeFilter}
-          />
-        ) : null}
+        <Dialog
+          icon="right-join"
+          onClose={this.props.onClose}
+          title="Add a count filter"
+          isOpen={this.props.open}
+          autoFocus={true}
+          canEscapeKeyClose={true}
+          canOutsideClickClose={true}
+          enforceFocus={true}
+        >
+          <div className={Classes.DIALOG_BODY}>
+            <div>
+              <FormGroup
+                helperText="If the number of matched records per VoterID is greater or equal to the number you enter, it will qualify"
+                label="Minimum number of record matches"
+                labelFor="text-input"
+                labelInfo="(required)"
+              >
+                <InputGroup
+                  id="text-input"
+                  placeholder="Enter a number"
+                  onChange={this.onCountChange}
+                  defaultValue={
+                    this.props.open ? this.props.open.filter.count : "1"
+                  }
+                />
+              </FormGroup>
+
+              <FormGroup
+                label="Fields"
+                labelFor="text-input"
+                labelInfo="(required)"
+              >
+                {this.props.open && this.props.open.filter.subfilters
+                  ? this.props.open.filter.subfilters.map((filter, i) => {
+                      return (
+                        <Filter
+                          filter={filter}
+                          fields={[
+                            { name: "Election_Date", type: "DATE" },
+                            { name: "Vote_Code", type: "STRING" }
+                          ]}
+                          onFilterChange={this.onSubfilterChange}
+                          removeFilter={this.removeSubfilter}
+                        />
+                      );
+                    })
+                  : null}
+                <Button icon="add" onClick={this.addSubfilter}>
+                  Add field
+                </Button>
+              </FormGroup>
+            </div>
+            <div className={Classes.DIALOG_FOOTER}>
+              <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                <Button intent={Intent.PRIMARY} onClick={this.props.onClose}>
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Dialog>
       </div>
     );
   }
@@ -644,11 +916,95 @@ class Dashboard extends React.Component {
                 }
                 highlighted={this.props.highlighted}
                 subsetClicked={this.props.subsetClicked}
-                add={true}
+                addEdit={this.props.addEditSubset}
               />
             );
           })}
         </div>
+      </div>
+    );
+  }
+}
+
+class SubsetEditor extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {};
+
+    this.onClickDone = this.onClickDone.bind(this);
+    this.onSubsetFilterChange = this.onSubsetFilterChange.bind(this);
+    this.onSubsetTitleChange = this.onSubsetTitleChange.bind(this);
+  }
+
+  onSubsetFilterChange(index, subsetFilter) {
+    this.setState({ filter: subsetFilter });
+  }
+
+  onSubsetTitleChange(event) {
+    this.setState({ title: event.target.value });
+  }
+
+  onClickDone() {
+    var newSubset = this.state.filter || this.props.open.subset;
+
+    if (this.state.title) newSubset.title = this.state.title;
+
+    this.props.onDone(this.props.open.index, newSubset);
+  }
+
+  render() {
+    return (
+      <div>
+        <Dialog
+          icon="filter"
+          onClose={this.props.onClose}
+          title="Add / edit dashboard filter"
+          isOpen={this.props.open}
+          autoFocus={true}
+          canEscapeKeyClose={true}
+          canOutsideClickClose={true}
+          enforceFocus={true}
+        >
+          <div className={Classes.DIALOG_BODY}>
+            {this.props.open ? (
+              <div>
+                <FormGroup
+                  helperText="This phrase appears above the count of your filter on the main page in the results dashboard"
+                  label="Title"
+                  labelFor="text-input"
+                  labelInfo="(required)"
+                >
+                  <InputGroup
+                    id="text-input"
+                    placeholder="Enter a phrase"
+                    onChange={this.onSubsetTitleChange}
+                    defaultValue={this.props.open.subset.title}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  label="Fields"
+                  labelFor="text-input"
+                  labelInfo="(required)"
+                >
+                  <Filter
+                    filter={this.props.open.subset}
+                    fields={this.props.fields}
+                    onFilterChange={this.onSubsetFilterChange}
+                  />
+                </FormGroup>
+              </div>
+            ) : null}
+            <div className={Classes.DIALOG_FOOTER}>
+              <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                <Button intent={Intent.PRIMARY} onClick={this.onClickDone}>
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Dialog>
       </div>
     );
   }
@@ -671,46 +1027,107 @@ class Subset extends React.Component {
           "Subset" +
           (this.props.highlighted === this.props.subset.id
             ? " highlighted"
-            : "")
+            : "") +
+          (this.props.subset.id === "new" ? " new" : "")
         }
       >
-        <div className="Subset_body" onClick={this.onClick}>
-          <div className="Subset_body_label">{this.props.subset.name}</div>
-          <div className="Subset_body_count">{this.props.count}</div>
-        </div>
+        {this.props.subset.id === "new" ? (
+          <div className="Subset_body" onClick={this.props.addEdit}>
+            <div className="Subset_body_count">+</div>
+          </div>
+        ) : (
+          <div className="Subset_body" onClick={this.onClick}>
+            <div className="Subset_body_label">{this.props.subset.name}</div>
+            <div className="Subset_body_count">{this.props.count}</div>
+          </div>
+        )}
       </div>
     );
   }
 }
 
-class ExportOptions extends React.Component {
+class Export extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       selectedColumns: []
     };
-    this.onColumnClick = this.onColumnClick.bind(this);
+    this.onColumnToggle = this.onColumnToggle.bind(this);
     this.onClickforExport = this.onClickforExport.bind(this);
   }
 
-  onColumnClick() {
-    // this.props.subsetClicked(this.props.subset.id);
+  onColumnToggle(name) {
+    var updatedSelectedColumns = this.state.selectedColumns,
+      indexOfTitle = updatedSelectedColumns.indexOf(name);
+
+    if (indexOfTitle === -1) {
+      updatedSelectedColumns.push(name);
+    } else {
+      updatedSelectedColumns.splice(indexOfTitle, 1);
+    }
+
+    this.setState({ selectedColumns: updatedSelectedColumns });
   }
 
   onClickforExport() {
-    this.props.onExportConfirm(this.props.columns);
-    // this.props.subsetClicked(this.props.subset.id);
+    this.props.onExportConfirm(this.state.selectedColumns);
   }
 
   render() {
     return (
       <div>
-        {/*<div>ExportOptions</div>*/}
-        <Column
-          columns={this.props.selectedColumns}
-          selectedColumns={this.state.selectedColumns}
-          onColumnClick={this.onColumnClick}
-        />
+        <Dialog
+          icon="export"
+          onClose={this.props.close}
+          title="Export to CSV..."
+          isOpen={this.props.open}
+          autoFocus={true}
+          canEscapeKeyClose={true}
+          canOutsideClickClose={true}
+          enforceFocus={true}
+        >
+          <div className={Classes.DIALOG_BODY}>
+            <div>Pick which columns you would like to see in your CSV:</div>
+            {this.props.fields
+              ? this.props.fields.map((field, i) => {
+                  return (
+                    <Column
+                      key={i}
+                      field={field}
+                      selected={
+                        this.state.selectedColumns.indexOf(field.name) !== -1
+                      }
+                      onChange={this.onColumnToggle}
+                    />
+                  );
+                })
+              : null}
+            <div className={Classes.DIALOG_FOOTER}>
+              <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                {this.props.url ? (
+                  <AnchorButton
+                    target="_blank"
+                    icon="download"
+                    intent="success"
+                    href={this.props.url}
+                  >
+                    Download CSV
+                  </AnchorButton>
+                ) : this.props.exporting ? (
+                  <Button loading={true} />
+                ) : (
+                  <Button
+                    intent={Intent.PRIMARY}
+                    disabled={this.props.exporting}
+                    onClick={this.onClickforExport}
+                  >
+                    Finish
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </Dialog>
       </div>
     );
   }
@@ -719,14 +1136,22 @@ class ExportOptions extends React.Component {
 class Column extends React.Component {
   constructor(props) {
     super(props);
-    this.onClick = this.onClick.bind(this);
+    this.onChange = this.onChange.bind(this);
   }
 
-  onClick() {
-    // this.props.subsetClicked(this.props.subset.id);
+  onChange() {
+    this.props.onChange(this.props.field.name);
   }
 
   render() {
-    return null;
+    return (
+      <div>
+        <Checkbox
+          checked={this.props.selected}
+          label={this.props.field.name}
+          onChange={this.onChange}
+        />
+      </div>
+    );
   }
 }

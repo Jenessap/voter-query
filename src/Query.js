@@ -1,5 +1,16 @@
 import { tableId, joinTableId, projectId, datasetId } from "./Google";
 
+export var nonValueOperators = [
+  "IS ''",
+  "!= ''",
+  "IS NOT NULL",
+  "IS NULL",
+  "IS TRUE",
+  "IS FALSE"
+];
+export var multiValueOperators = ["BETWEEN", "NOT BETWEEN"];
+export var likeOperators = ["LIKE%", "%LIKE", "%LIKE%", "NOT %LIKE%"];
+
 var Query = {
   // Helper function to add quote to "value"s.
   addQuotes: function(value) {
@@ -9,24 +20,44 @@ var Query = {
     return value;
   },
   // Helper function to add quotes to each value and put the whole list in ().
-  serializeValue: function(value) {
+  serializeValue: function(value, logic) {
     if (value instanceof Date) {
-      // DATE('2016-01-01')
-      return `DATE(\'${value}\')`;
+      return `DATE(\'${value.toISOString().slice(0, 10)}\')`;
     } else if (typeof value === "object") {
-      return "(" + value.map(Query.addQuotes).join(",") + ")";
+      if (multiValueOperators.indexOf(logic) !== -1) {
+        return value.map(Query.serializeValue).join(" AND ");
+      } else {
+        return "(" + value.map(Query.serializeValue).join(",") + ")";
+      }
     } else if (typeof value === "string") {
-      return Query.addQuotes(value);
+      if (likeOperators.indexOf(logic) !== -1) {
+        if (logic === "%LIKE") {
+          return Query.addQuotes("%" + value);
+        } else if (logic === "LIKE%") {
+          return Query.addQuotes(value + "%");
+        } else if (logic === "%LIKE%") {
+          return Query.addQuotes("%" + value + "%");
+        } else if (["%LIKE%", "NOT %LIKE%"].indexOf(logic) !== -1) {
+          return Query.addQuotes("%" + value + "%");
+        }
+      } else {
+        return Query.addQuotes(value);
+      }
+    } else if (!value && nonValueOperators.indexOf(logic.trim()) === -1) {
+      return "";
     }
     return value;
+  },
+  sanitizeLogic(logic) {
+    return logic.replace("%", "");
   },
   // Helper:Creates a complete Where clause from an object's attributes(logic, name, and value)
   serializeWhereClause: function(f) {
     return [
       "(",
       f.field.name,
-      f.logic,
-      Query.serializeValue(f.value),
+      Query.sanitizeLogic(f.logic),
+      Query.serializeValue(f.value, f.logic),
       ")"
     ].join(" ");
   },
@@ -114,4 +145,13 @@ var Query = {
   }
 };
 
-module.exports = Query;
+export var {
+  addQuotes,
+  serializeValue,
+  serializeWhereClause,
+  prepareSQLClauses,
+  buildSubsetWhereClause,
+  constructCountQuery,
+  constructQueryForSubsetCount,
+  constructQueryForExport
+} = Query;

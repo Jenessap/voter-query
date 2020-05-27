@@ -24,7 +24,7 @@ body {
   background-color: #004384;
   color: #ffffff;
   text-align: center;
-  padding-top: 20%;
+  padding-top: 10%;
 }
 
 .App_login-screen img {
@@ -90,11 +90,17 @@ body {
 .App_footer_body {
   float: right;
   overflow: hidden;
+  height: 100%;
 }
 
 .App_footer_body_label,
 .App_footer_body_action {
   float: left;
+}
+
+.App_footer_body_label {
+  line-height: 40px;
+  margin-right: 24px;
 }
 
 /*********** Filters *****************/
@@ -107,6 +113,7 @@ body {
 
 .Filters_label {
   height: 20px;
+  padding: 5px 10px;
 }
 
 .Filters_list {
@@ -115,10 +122,16 @@ body {
 
 .Filters_actions {
   height: 40px;
+  background-color: #e2e2e2;
+  border-top: 1px solid #ddd;
 }
 
 .Filters_actions button {
   float: right;
+  margin: 5px;
+}
+
+.bp3-tag {
   margin: 5px;
 }
 
@@ -146,6 +159,7 @@ body {
   text-align: center;
   padding: 2%;
   cursor: pointer;
+  transition: 0.15s background-color ease-in;
 }
 
 .Subset_body:hover {
@@ -160,4 +174,12 @@ body {
 .Subset.highlighted .Subset_body {
   color: #ffffff;
   background-color: teal;
+}
+
+.Subset.new .Subset_body {
+  background-color: #f2f2f2;
+}
+
+.Subset.new .Subset_body:hover {
+  background-color: #efefef;
 }

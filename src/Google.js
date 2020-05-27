@@ -1,7 +1,4 @@
-var API_KEY = "AIzaSyBj7iiMWY5oeITwH9PMTMLLQc8srvx8c8Y",
-  CLIENT_ID =
-    "450118682683-61sjkjihj0jd1d0sfh0sojdljsr4kaic.apps.googleusercontent.com",
-  scope = "https://www.googleapis.com/auth/bigquery",
+var scope = "https://www.googleapis.com/auth/bigquery",
   gapi = window.gapi,
   authorizedEmails = [
     "jenessa.peterson@gmail.com",
@@ -11,10 +8,14 @@ var API_KEY = "AIzaSyBj7iiMWY5oeITwH9PMTMLLQc8srvx8c8Y",
   intendedOutputFilename = "voter_data2/Voters_out.csv",
   bucketPrefix = "https://storage.cloud.google.com/";
 
+export const API_KEY = "AIzaSyBj7iiMWY5oeITwH9PMTMLLQc8srvx8c8Y";
+export const CLIENT_ID =
+  "450118682683-61sjkjihj0jd1d0sfh0sojdljsr4kaic.apps.googleusercontent.com";
+
 export var tableId = "Voters";
 export var joinTableId = "History";
 export var projectId = "renotype";
-export var datasetId = "Practice_voters2";
+export var datasetId = "Voter_dataset3";
 export var location = "us-west2";
 
 var Google = {
@@ -167,57 +168,58 @@ var Google = {
     // console.log("Response", response);
     // Then keep setTimeout-ing every 4 seconds to see if there is a result.
     var jobCompletionInterval = setInterval(function() {
-      Google.getJobStatus(response.result.jobReference.jobId).then(function(
-        state
-      ) {
-        if (state === "DONE") {
-          clearInterval(jobCompletionInterval);
+      Google.getQueryJobStatus(response.result.jobReference.jobId).then(
+        function(jobComplete) {
+          if (jobComplete) {
+            clearInterval(jobCompletionInterval);
 
-          // Then, create an export job.
-          gapi.client.bigquery.jobs
-            .insert({
-              projectId: projectId,
-              resource: {
-                configuration: {
-                  extract: {
-                    sourceTable:
-                      response.result.configuration.query.destinationTable,
-                    destinationUri: `gs://${intendedOutputFilename}`,
-                    destinationFormat: "CSV"
+            // Then, create an export job.
+            gapi.client.bigquery.jobs
+              .insert({
+                projectId: projectId,
+                resource: {
+                  configuration: {
+                    extract: {
+                      sourceTable:
+                        response.result.configuration.query.destinationTable,
+                      destinationUri: `gs://${intendedOutputFilename}`,
+                      destinationFormat: "CSV"
+                    }
                   }
                 }
-              }
-            })
-            .then(
-              function(response) {
-                Google.onExportJobInsert(response, resolve, reject);
-              },
-              function(err) {
-                console.error("Execute error", err);
-              }
-            );
+              })
+              .then(
+                function(response) {
+                  Google.onExportJobInsert(response, resolve, reject);
+                },
+                function(err) {
+                  console.error("Execute error", err);
+                  reject(err);
+                }
+              );
+          }
         }
-      });
-    }, 4000);
+      );
+    }, 2000);
   },
 
   onExportJobInsert(response, resolve, reject) {
     // Then, keep timeout-ing every 4 seconds until that job is finished.
     var jobCompletionInterval = setInterval(function() {
-      Google.getJobStatus(response.result.jobReference.jobId).then(function(
-        state
-      ) {
-        if (state === "DONE") {
-          clearInterval(jobCompletionInterval);
+      Google.getExtractJobStatus(response.result.jobReference.jobId).then(
+        function(jobComplete) {
+          if (jobComplete) {
+            clearInterval(jobCompletionInterval);
 
-          // Then, return the URL.
-          resolve(`${bucketPrefix}${intendedOutputFilename}`);
+            // Then, return the URL.
+            resolve(`${bucketPrefix}${intendedOutputFilename}`);
+          }
         }
-      });
-    }, 4000);
+      );
+    }, 3000);
   },
 
-  getJobStatus(jobId) {
+  getQueryJobStatus(jobId) {
     return new Promise(function(resolve, reject) {
       return gapi.client.bigquery.jobs
         .getQueryResults({
@@ -231,7 +233,30 @@ var Google = {
             // Handle the results here (response.result has the parsed body).
             // response.results.status.state == 'DONE'
             // console.log("Response", response);
-            resolve(response.results.status.state);
+            resolve(response.result.jobComplete);
+          },
+          function(err) {
+            console.error("Execute error", err);
+            reject(err);
+          }
+        );
+    });
+  },
+
+  getExtractJobStatus(jobId) {
+    return new Promise(function(resolve, reject) {
+      return gapi.client.bigquery.jobs
+        .get({
+          projectId: projectId,
+          jobId: jobId,
+          location: location
+        })
+        .then(
+          function(response) {
+            // Handle the results here (response.result has the parsed body).
+            // response.results.status.state == 'DONE'
+            // console.log("Response", response);
+            resolve(response.result.status.state === "DONE");
           },
           function(err) {
             console.error("Execute error", err);
