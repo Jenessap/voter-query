@@ -69,6 +69,7 @@ const logicOptions = {
   ],
 
   DATE: [
+    {id: "=", title: "is"},
     { id: "<", title: "is before" },
     { id: ">", title: "is after" },
     { id: "BETWEEN", title: "is between" },
