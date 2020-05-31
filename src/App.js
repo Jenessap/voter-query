@@ -1079,7 +1079,7 @@ class Export extends React.Component {
       <div>
         <Dialog
           icon="export"
-          onClose={this.props.close}
+          onClose={this.props.onClose}
           title="Export to CSV..."
           isOpen={this.props.open}
           autoFocus={true}
