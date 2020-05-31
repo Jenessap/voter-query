@@ -190,3 +190,7 @@ body {
 .Subset.new .Subset_body:hover {
   background-color: #efefef;
 }
+
+.SubsetEditor_dialog.bp3-dialog {
+  width: 650px;
+}

@@ -957,8 +957,9 @@ class SubsetEditor extends React.Component {
 
   render() {
     return (
-      <div>
+      <div className="SubsetEditor">
         <Dialog
+        className="SubsetEditor_dialog"
           icon="filter"
           onClose={this.props.onClose}
           title="Add / edit dashboard filter"
