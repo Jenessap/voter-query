@@ -830,8 +830,9 @@ class CountFilterPopup extends React.Component {
 
   render() {
     return (
-      <div>
+      <div className="CountFilterPopup">
         <Dialog
+        className="CountFilterPopup_dialog"
           icon="right-join"
           onClose={this.props.onClose}
           title="Add a count filter"

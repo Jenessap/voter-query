@@ -135,6 +135,13 @@ body {
   margin: 5px;
 }
 
+/*********** CountFilterPopup *****************/
+
+.CountFilterPopup_dialog.bp3-dialog {
+  width: 650px;
+}
+
+
 /*********** Dashboard *****************/
 
 .Dashboard,
