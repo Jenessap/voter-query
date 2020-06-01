@@ -775,8 +775,8 @@ class Value extends React.Component {
       popoverProps: { position: Position.BOTTOM },
       shortcuts: true,
       closeOnSelection: true,
-      formatDate: date => (date == null ? "" : date.toLocaleDateString()),
-      parseDate: str => (str ? new Date(Date.parse(str)) : new Date())
+      formatDate: date => (date === null ? "" : date.toLocaleDateString()),
+      parseDate: str => str ? new Date(Date.parse(str)) : new Date()
     };
 
     if (multiValueOperators.indexOf(this.props.logic) === -1) {
@@ -785,7 +785,7 @@ class Value extends React.Component {
           {...dateProps}
           onChange={this.handleDateChange}
           value={
-            !this.props.selected instanceof Array && this.props.selected
+            !(this.props.selected instanceof Array) && this.props.selected
               ? this.props.selected
               : new Date()
           }
