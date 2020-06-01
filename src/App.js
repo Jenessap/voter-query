@@ -145,51 +145,72 @@ export default class App extends React.Component {
       ],
       subsetCounts: {},
 
-      fields: [
+      fieldValueOptions: {
+        County: [
+          "Churchill",
+          "Douglas",
+          "Esmeralda",
+          "Humboldt",
+          "Lincoln",
+          "Mineral",
+          "Pershing",
+          "Washoe",
+          "Carson City",
+          "Clark",
+          "Elko",
+          "Eureka",
+          "Lander",
+          "Lyon",
+          "Nye",
+          "Storey",
+          "White Pine"
+        ],
+        Party: [
+          "Green Party",
+          "Libertarian Party",
+          "Non-Partisan",
+          "Other (All Others)",
+          "Democrat",
+          "Independent American Party",
+          "Natural Law Party",
+          "Republican"
+        ],
+        County_Status: [
+          "Active",
+          "Inactive",
+          "P-17",
+          ],
+        State: ["NV"]
+      },
+
+     fields: [
+        { name: "VoterID", type: "STRING"},
         { name: "County", type: "STRING" },
         { name: "First_Name", type: "STRING" },
         { name: "Middle_Name", type: "STRING" },
-        { name: "Last_Name", type: "STRING" },
+        { name: "Last_Name", type: "STRING"},
         { name: "Suffix", type: "STRING" },
-        { name: "Birth_Date", type: "DATE" },
+        { name: "Birth_Date", type: "DATE"},
         { name: "Registration_Date", type: "DATE" },
         { name: "Address_1", type: "STRING" },
         { name: "Address_2", type: "STRING" },
-        { name: "City", type: "STRING" },
-        { name: "State", type: "STRING" },
-        { name: "Zip", type: "STRING" },
-        { name: "Phone", type: "STRING" },
-        { name: "Party", type: "STRING" },
-        { name: "Congressional_District", type: "STRING" },
+        { name: "City", type: "STRING"},
+        { name: "State", type: "STRING"},
+        { name: "Zip", type: "STRING"},
+        { name: "Phone", type: "STRING"},
+        { name: "Party", type: "STRING"},
+        { name: "Congressional_District", type: "STRING"},
+        { name: "Senate_District", type: "STRING"},
         { name: "Assembly_District", type: "STRING" },
+        { name: "Education_District", type: "STRING", },
+        { name: "Regent_District", type: "STRING"},
+        { name: "Registered_Precinct", type: "STRING" },
+        { name: "County_Status", type: "STRING" },
+        { name: "County_Voter_ID", type: "STRING"},
         { name: "ID_Required", type: "BOOLEAN" }
       ],
 
-      columns: [
-        "County",
-        "First_Name",
-        "Middle_Name",
-        "Last_Name",
-        "Suffix",
-        "Birth_Date",
-        "Registration_Date",
-        "Address_1",
-        "Address_2",
-        "City",
-        "State",
-        "Zip",
-        "Phone",
-        "Party",
-        "Congressional_District",
-        "Senate_District",
-        "Assembly_District",
-        "Education_District",
-        "Regent_District",
-        "Registered_Precinct",
-        "County_Status",
-        "County_Voter_ID",
-        "ID_Required"
-      ],
+
       totalRecords: null
       // countFilterOpen: {state:false, ?}
     };
@@ -409,6 +430,7 @@ export default class App extends React.Component {
             onSearchClick={this.search}
             filters={this.state.filters}
             fields={this.state.fields}
+            fieldValueOptions={this.state.fieldValueOptions}
             onFilterChange={this.onFilterChange}
             addRegularFilter={this.addRegularFilter}
             addCountFilter={this.addCountFilter}
@@ -484,6 +506,7 @@ class Filters extends React.Component {
                 index={i}
                 filter={filter}
                 fields={this.props.fields}
+                fieldValueOptions={this.props.fieldValueOptions}
                 onFilterChange={this.props.onFilterChange}
                 removeFilter={this.props.removeFilter}
                 openCountFilter={this.props.openCountFilter}
@@ -544,8 +567,7 @@ class Filter extends React.Component {
     this.props.onFilterChange(this.props.index, filter);
   }
 
-  // filters: [
-  // {count:null, field:{name: "County", type: String }, logic:"is", va
+
   onFieldChange(field) {
     this.buildAndChangeFilter(["field", field]);
   }
@@ -564,6 +586,11 @@ class Filter extends React.Component {
 
   render() {
     var isCountFilter = this.props.filter.count;
+    var options = [];
+    
+    if (this.props.filter.field && this.props.fieldValueOptions.hasOwnProperty(this.props.filter.field.name)){
+      options = this.props.fieldValueOptions[this.props.filter.field.name];
+    }
 
     return (
       <Tag
@@ -589,6 +616,7 @@ class Filter extends React.Component {
               selected={this.props.filter.logic}
             />
             <Value
+            options={options}
               onChange={this.onValueChange}
               selected={this.props.filter.value}
               field={this.props.filter.field}
@@ -621,9 +649,9 @@ class Field extends React.Component {
     this.props.onChange(value);
   }
 
-  renderOption(item, stuff) {
+  renderOption(item, itemProps) {
     return (
-      <div key={item.name} onClick={stuff.handleClick}>
+      <div key={item.name} onClick={itemProps.handleClick}>
         {item.name}
       </div>
     );
@@ -694,7 +722,13 @@ class Value extends React.Component {
   }
 
   onChange(event) {
-    var value = event.target.value;
+    var value; 
+   if(typeof(event) === "object") {
+     value = event.target.value;
+    }
+    else {
+     value = event;
+    }
     if (["IN", "NOT IN"].indexOf(this.props.logic) !== -1) {
       value = value.split(",").map(v => v.trim());
 
@@ -718,6 +752,19 @@ class Value extends React.Component {
     this.handleDateChange(datePair);
   }
 
+  
+  renderOption(item, itemProps) {
+    return (
+      <div key={item} onClick={itemProps.handleClick}>
+        {item}
+      </div>
+    );
+  }
+  
+  renderInputValue(input) {
+    return input;
+  }
+  
   renderDates() {
     var dateProps = {
       popoverProps: { position: Position.BOTTOM },
@@ -765,6 +812,20 @@ class Value extends React.Component {
       <span>
         {this.props.field &&
         nonValueOperators.indexOf(this.props.logic) === -1 ? (
+          this.props.options.length ? (
+            <span>
+        <Suggest
+          items={this.props.options}
+          onItemSelect={this.onChange}
+          closeOnSelect={true}
+          resetOnQuery={true}
+          itemRenderer={this.renderOption}
+          inputValueRenderer={this.renderInputValue}
+          selectedItem={this.props.selected}
+          inputProps={{ placeholder: "Pick a value" }}
+        />
+      </span>
+          ) :
           this.props.field.type === "DATE" ? (
             this.renderDates()
           ) : (
@@ -874,6 +935,19 @@ class CountFilterPopup extends React.Component {
                             { name: "Election_Date", type: "DATE" },
                             { name: "Vote_Code", type: "STRING" }
                           ]}
+                          // TODO fill in and hook these to show up
+                          fieldValueOptions={{
+                            Election_Date: [],
+                            Vote_Code: [
+                              "BR",
+                              "EV",
+                              "FW",
+                              "MB",
+                              "PP",
+                              "PV" 
+                            ]
+                          }
+                          }
                           onFilterChange={this.onSubfilterChange}
                           removeFilter={this.removeSubfilter}
                         />
