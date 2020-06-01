@@ -567,9 +567,14 @@ class Filter extends React.Component {
     this.props.onFilterChange(this.props.index, filter);
   }
 
-
   onFieldChange(field) {
     this.buildAndChangeFilter(["field", field]);
+
+    // If this filter doesn't have a logic value set, default it to the first
+    // value in the list (because the UI shows that by default.)
+    if (this.props.filter.logic === null){
+        this.onLogicChange(logicOptions[field.type][0].id);
+    }
   }
   onLogicChange(logic) {
     this.buildAndChangeFilter(["logic", logic]);
@@ -587,7 +592,7 @@ class Filter extends React.Component {
   render() {
     var isCountFilter = this.props.filter.count;
     var options = [];
-    
+
     if (this.props.filter.field && this.props.fieldValueOptions.hasOwnProperty(this.props.filter.field.name)){
       options = this.props.fieldValueOptions[this.props.filter.field.name];
     }
@@ -722,7 +727,7 @@ class Value extends React.Component {
   }
 
   onChange(event) {
-    var value; 
+    var value;
    if(typeof(event) === "object") {
      value = event.target.value;
     }
@@ -752,7 +757,7 @@ class Value extends React.Component {
     this.handleDateChange(datePair);
   }
 
-  
+
   renderOption(item, itemProps) {
     return (
       <div key={item} onClick={itemProps.handleClick}>
@@ -760,11 +765,11 @@ class Value extends React.Component {
       </div>
     );
   }
-  
+
   renderInputValue(input) {
     return input;
   }
-  
+
   renderDates() {
     var dateProps = {
       popoverProps: { position: Position.BOTTOM },
@@ -944,7 +949,7 @@ class CountFilterPopup extends React.Component {
                               "FW",
                               "MB",
                               "PP",
-                              "PV" 
+                              "PV"
                             ]
                           }
                           }

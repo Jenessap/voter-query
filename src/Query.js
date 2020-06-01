@@ -23,13 +23,13 @@ var Query = {
   serializeValue: function(value, logic) {
     if (value instanceof Date) {
       return `DATE(\'${value.toISOString().slice(0, 10)}\')`;
-    } else if (typeof value === "object") {
+  } else if (value && typeof value === "object") {
       if (multiValueOperators.indexOf(logic) !== -1) {
         return value.map(Query.serializeValue).join(" AND ");
       } else {
         return "(" + value.map(Query.serializeValue).join(",") + ")";
       }
-    } else if (typeof value === "string") {
+  } else if (value && typeof value === "string") {
       if (likeOperators.indexOf(logic) !== -1) {
         if (logic === "%LIKE") {
           return Query.addQuotes("%" + value);
@@ -110,11 +110,11 @@ var Query = {
     clauses,
     count = false
   ) {
-    return `WITH countClause AS 
-    (SELECT VoterID, 
-      COUNT(voterID) as numberOf 
+    return `WITH countClause AS
+    (SELECT VoterID,
+      COUNT(voterID) as numberOf
       FROM ${clauses.join}
-      WHERE ${clauses.joinWhere} 
+      WHERE ${clauses.joinWhere}
       GROUP BY VoterID HAVING numberOf >= ${clauses.count})
     SELECT ${count ? "COUNT(*)" : clauses.select}
     FROM ${clauses.from}
@@ -128,7 +128,7 @@ var Query = {
       return Query.constructCountQuery(subsets, chosenSubsetID, clauses, true);
     }
     // Otherwise, we're looking for a summary (count) on a simple query.
-    return `SELECT COUNT(*) 
+    return `SELECT COUNT(*)
     FROM ${clauses.from}
     WHERE ${Query.buildSubsetWhereClause(subsets, chosenSubsetID, clauses)};`;
   },
@@ -139,8 +139,8 @@ var Query = {
       return Query.constructCountQuery(subsets, chosenSubsetID, clauses, false);
     }
     // Otherwise, we're looking for a records from a simple query.
-    return `SELECT ${clauses.select} 
-    FROM ${clauses.from} 
+    return `SELECT ${clauses.select}
+    FROM ${clauses.from}
     WHERE ${Query.buildSubsetWhereClause(subsets, chosenSubsetID, clauses)};`;
   }
 };
