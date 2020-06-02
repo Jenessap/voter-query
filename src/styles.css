@@ -71,7 +71,6 @@ body {
   flex-grow: 0.4;
   width: 100%;
   background: #f2f2f2;
-  overflow: auto;
 }
 
 .App_dashboard {
@@ -151,8 +150,13 @@ body {
   margin: 5px;
 }
 
-.bp3-tag {
+.Filters .bp3-tag {
   margin: 5px;
+}
+
+.bp3-menu {
+    max-height: 300px;
+    overflow: auto;
 }
 
 /*********** CountFilterPopup *****************/

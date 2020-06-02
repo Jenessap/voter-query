@@ -12,7 +12,8 @@ import {
   FormGroup,
   AnchorButton,
   Position,
-  Overlay
+  Overlay,
+  MenuItem
 } from "@blueprintjs/core";
 import "../node_modules/normalize.css/normalize.css";
 import "../node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css";
@@ -674,12 +675,15 @@ class Field extends React.Component {
     this.props.onChange(value);
   }
 
-  renderOption(item, itemProps) {
-    return (
-      <div key={item.name} onClick={itemProps.handleClick}>
-        {item.name}
-      </div>
-    );
+  renderOption(option, { handleClick, modifiers, query }) {
+      return <MenuItem
+          active={modifiers.active}
+            disabled={modifiers.disabled}
+            label={''}
+            key={option.id}
+            onClick={handleClick}
+            text={option.name}
+      />;
   }
 
   renderInputValue(input) {
@@ -698,6 +702,7 @@ class Field extends React.Component {
           inputValueRenderer={this.renderInputValue}
           selectedItem={this.props.selected}
           inputProps={{ placeholder: "Pick a field" }}
+          popoverProps={{ minimal: true, position: 'bottom' }}
         />
       </span>
     );
@@ -778,12 +783,15 @@ class Value extends React.Component {
   }
 
 
-  renderOption(item, itemProps) {
-    return (
-      <div key={item} onClick={itemProps.handleClick}>
-        {item}
-      </div>
-    );
+  renderOption(option, { handleClick, modifiers, query }) {
+      return <MenuItem
+          active={modifiers.active}
+            disabled={modifiers.disabled}
+            label={''}
+            key={option}
+            onClick={handleClick}
+            text={option}
+      />;
   }
 
   renderInputValue(input) {
@@ -838,9 +846,7 @@ class Value extends React.Component {
       <span>
         {this.props.field &&
         nonValueOperators.indexOf(this.props.logic) === -1 ? (
-          this.props.options.length ? (
-            <span>
-        <Suggest
+          this.props.options.length ? <Suggest
           items={this.props.options}
           onItemSelect={this.onChange}
           closeOnSelect={true}
@@ -849,9 +855,8 @@ class Value extends React.Component {
           inputValueRenderer={this.renderInputValue}
           selectedItem={this.props.selected}
           inputProps={{ placeholder: "Pick a value" }}
-        />
-      </span>
-          ) :
+          popoverProps={{ minimal: true, position: 'bottom' }}
+        /> :
           this.props.field.type === "DATE" ? (
             this.renderDates()
           ) : (
