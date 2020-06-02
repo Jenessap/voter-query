@@ -187,13 +187,26 @@ body {
   padding: 2%;
   cursor: pointer;
   transition: 0.15s background-color ease-in;
+  position: relative;
 }
 
 .Subset_body:hover {
   background-color: #e0f3f3;
 }
 
-.Subset_body_count {
+.Subset_body_actions {
+    position: absolute;
+    margin-right: 2%;
+    float: right;
+    right: 0px;
+    display: none;
+}
+
+.Subset_body:hover .Subset_body_actions {
+    display: block;
+}
+
+.Subset_body_content_count {
   font-size: 3em;
   font-weight: bold;
 }

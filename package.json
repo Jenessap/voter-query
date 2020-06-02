@@ -8,6 +8,7 @@
     "@blueprintjs/core": "3.26.1",
     "@blueprintjs/datetime": "^3.17.0",
     "@blueprintjs/select": "3.12.3",
+    "firebase": "^7.14.6",
     "react": "16.12.0",
     "react-dom": "16.12.0",
     "react-scripts": "3.0.1",

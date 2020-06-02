@@ -1,21 +1,23 @@
 import React from "react";
 import ReactDOM from "react-dom";
-//import * as firebase from "firebase";
+import firebase from 'firebase/app';
+import 'firebase/firestore';
 
 import App from "./App";
 import { API_KEY } from "./Google";
 
 // Initialize Cloud Firestore through Firebase
-/*window.db = firebase
+window.store = firebase
   .initializeApp({
     apiKey: API_KEY,
     authDomain: "renotype.firebaseapp.com",
     databaseURL: "https://renotype.firebaseio.com",
-    projectId: "renotype.firebaseapp.com",
+    projectId: "renotype",
     storageBucket: "renotype.appspot.com",
     messagingSenderId: "450118682683"
   })
-  .firestore();*/
+  .firestore();
+
 
 const rootElement = document.getElementById("root");
 ReactDOM.render(
@@ -24,4 +26,3 @@ ReactDOM.render(
   </React.StrictMode>,
   rootElement
 );
-
