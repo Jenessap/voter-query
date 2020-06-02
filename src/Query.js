@@ -1,8 +1,8 @@
 import { tableId, joinTableId, projectId, datasetId } from "./Google";
 
 export var nonValueOperators = [
-  "IS ''",
-  "!= ''",
+  "IS \"\"",
+  "!= \"\"",
   "IS NOT NULL",
   "IS NULL",
   "IS TRUE",
@@ -43,7 +43,7 @@ var Query = {
       } else {
         return Query.addQuotes(value);
       }
-    } else if (!value  && nonValueOperators.indexOf(logic.trim()) === -1) {
+    } else if (!value && nonValueOperators.indexOf(logic.trim()) === -1) {
       return Query.addQuotes("");
     }
     return value;
