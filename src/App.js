@@ -57,8 +57,8 @@ const logicOptions = {
     { id: "IN", title: "is one of" },
     { id: "NOT IN", title: "is not one of" },
     { id: "!=", title: "is not" },
-    { id: "IS ''", title: "is empty" },
-    { id: "!= ''", title: "is not empty" },
+    { id: "IS \"\"", title: "is empty" },
+    { id: "!= \"\"", title: "is not empty" },
     { id: "IS NOT NULL", title: "is set" },
     { id: "IS NULL", title: "is not set" }
   ],
