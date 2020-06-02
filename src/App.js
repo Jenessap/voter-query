@@ -87,7 +87,7 @@ export default class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      loggedIn: true,
+      loggedIn: false,
       subsets: [],
       subsetHighlighted: "all",
       filters: [
@@ -801,11 +801,52 @@ class Value extends React.Component {
   renderDates() {
     var dateProps = {
       popoverProps: { position: Position.BOTTOM },
-      shortcuts: true,
+      shortcuts: [
+        {
+          date: new Date('2020-06-10'),
+          label: "Primary 2020"
+        },
+        {
+          date: new Date('2020-01-02'),
+          label: "January 1st, 2020"
+        },
+        {
+          date: new Date('2018-11-07'),
+          label: "General 2018"
+        },
+        {
+          date: new Date('2018-06-13'),
+          label: "Primary 2018"
+        },
+        {
+          date: new Date('2016-11-09'),
+          label: "General 2016"
+        },
+        {
+          date: new Date('2016-06-15'),
+          label: "Primary 2016"
+        },
+        {
+          date: new Date('2014-11-05'),
+          label: "General 2014"
+        },
+        {
+          date: new Date('2014-06-11'),
+          label: "Primary 2014"
+        },
+        {
+          date: new Date('2012-11-07'),
+          label: "General 2012"
+        },
+        {
+          date: new Date('2012-06-13'),
+          label: "Primary 2012"
+        }
+      ],
       closeOnSelection: true,
       formatDate: date => (date === null ? "" : date.toLocaleDateString()),
       parseDate: str => str ? new Date(Date.parse(str)) : new Date(),
-      minDate: new Date('1900-01-1')
+      minDate: new Date('1900-01-01')
     };
 
     if (multiValueOperators.indexOf(this.props.logic) === -1) {
@@ -968,19 +1009,7 @@ class CountFilterPopup extends React.Component {
                           ]}
                           // TODO fill in and hook these to show up
                           fieldValueOptions={{
-                            // Election_Date: [
-                            // 2020-06-09 (Primary 2020)
-                            // 2020-01-01 
-                            // 2018-11-06 (General 2018)
-                            // 2018-06-12 (Primary 2018)
-                            // 2016-11-08 (General 2016)
-                            // 2016-06-14 (Primary 2016)
-                            // 2014-11-04 (General 2014)
-                            // 2014-06-10 (Primary 2014)
-                            // 2012-11-06 (General 2012)
-                            // 2012-06-12 (Primary 2012)
-                            // 2011-09-13 (2nd Congressional District Special Election 2011)
-                            // ],
+
                             Vote_Code: [
                               "BR",
                               "EV",
