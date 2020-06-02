@@ -218,7 +218,7 @@ export default class App extends React.Component {
     this.setState({ exporting: true });
     Google.export(query).then(url => {
       // Make the url downloadable through a button click.
-      this.setState({ exporting: false, url, exportOpen: false });
+      this.setState({ exporting: false, url });
     });
   }
 
@@ -1232,6 +1232,7 @@ class Export extends React.Component {
                     icon="download"
                     intent="success"
                     href={this.props.url}
+                    onClick={this.props.onClose}
                   >
                     Download CSV
                   </AnchorButton>
