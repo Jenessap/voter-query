@@ -11,7 +11,8 @@ import {
   InputGroup,
   FormGroup,
   AnchorButton,
-  Position
+  Position,
+  Overlay
 } from "@blueprintjs/core";
 import "../node_modules/normalize.css/normalize.css";
 import "../node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css";
@@ -171,7 +172,10 @@ export default class App extends React.Component {
         { name: "ID_Required", type: "BOOLEAN" }
       ],
 
-      totalRecords: null
+      totalRecords: null,
+
+      searching: false
+
       // countFilterOpen: {state:false, ?}
     };
     // Funtions sent to <Dashboard>.
@@ -278,6 +282,8 @@ export default class App extends React.Component {
   }
 
   search() {
+    this.setState({ searching: true });
+
     var clauses = prepareSQLClauses(
       this.state.filters.filter(filter => !filter.count),
       this.state.columns,
@@ -298,7 +304,7 @@ export default class App extends React.Component {
       });
     })
     ).then(() => {
-      this.setState({ subsetCounts: newSubsetCounts });
+      this.setState({ subsetCounts: newSubsetCounts, searching: false });
     });
   }
 
@@ -496,6 +502,12 @@ export default class App extends React.Component {
           open={this.state.countFilterOpen}
           onClose={this.closeCountFilterPopup}
         />
+        <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} isOpen={this.state.searching}>
+            <div className={"App_searching " + Classes.OVERLAY_CONTENT}>
+                <PatienceQuote show={this.state.searching} />
+                <Button loading={true} />
+            </div>
+        </Overlay>
       </div>
     );
   }
@@ -1264,4 +1276,33 @@ class Column extends React.Component {
       </div>
     );
   }
+}
+
+class PatienceQuote extends React.Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            // From first random Google result: https://www.awakenthegreatnesswithin.com/35-inspirational-quotes-on-patience/.
+            patienceQuotes: [
+                { text: 'Patience is not the ability to wait, but the ability to keep a good attitude while waiting.', attribution: 'Anonymous'},
+                { text: 'Patience is bitter, but its fruit is sweet.', attribution: 'Aristotle'},
+                { text: 'He that can have patience can have what he will.', attribution: 'Benjamin Franklin'},
+                { text: 'Have patience. All things are difficult before they become easy.', attribution: 'Saadi'},
+                { text: 'Patience is the calm acceptance that things can happen in a different order than the one you have in your mind.', attribution: 'David G. Allen'},
+                { text: 'Patience is a conquering virtue.', attribution: 'Geoffrey Chaucer'},
+                { text: 'It is easier to find men who will volunteer to die. Than to find those who are willing to endure pain with patience.', attribution: 'Julius Caesar'},
+                { text: 'With love and patience, nothing is impossible.', attribution: 'Daisaku Ikeda'},
+                { text: 'Patience is a key element of success.', attribution: 'Bill Gates'},
+                { text: 'All great achievements require time.', attribution: 'Maya Angelou'}
+            ]
+        }
+    }
+
+    render(){
+        var randomQuote = this.state.patienceQuotes[Math.floor(Math.random() * 10)];
+        return <div className="PatienceQuote">
+            <div className="PatienceQuote_text">“{randomQuote.text}”</div>
+            <div className="PatienceQuote_attribution">{randomQuote.attribution}</div>
+        </div>;
+    }
 }
