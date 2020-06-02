@@ -101,8 +101,8 @@ export default class App extends React.Component {
         {
           count: null,
           field: { name: "Address_1", type: "STRING" },
-          logic: "!=",
-          value: "",
+          logic: "!= \"\"",
+          value: null,
           subfilters: null
         }
       ],
