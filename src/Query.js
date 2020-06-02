@@ -43,8 +43,8 @@ var Query = {
       } else {
         return Query.addQuotes(value);
       }
-    } else if (!value && nonValueOperators.indexOf(logic.trim()) === -1) {
-      return "";
+    } else if (!value  && nonValueOperators.indexOf(logic.trim()) === -1) {
+      return Query.addQuotes("");
     }
     return value;
   },
