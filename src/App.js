@@ -27,6 +27,8 @@ import {
   nonValueOperators,
   multiValueOperators
 } from "./Query";
+import firebase from 'firebase/app';
+
 
 const logicOptions = {
   INTEGER: [
@@ -84,48 +86,7 @@ export default class App extends React.Component {
     super(props);
     this.state = {
       loggedIn: true,
-      subsets: [
-        {
-          id: "all",
-          name: "Matching the above filters (all)",
-          field: null,
-          logic: null,
-          value: null,
-          subfilters: null
-        },
-        {
-          id: "1",
-          name: "Registered Democrat",
-          field: { name: "Party", type: "STRING" },
-          logic: "=",
-          value: "",
-          subfilters: null
-        },
-        {
-          id: "2",
-          name: "Registered after Jan. 1st, 2018",
-          field: { name: "Birth_Date", type: "DATE" },
-          logic: ">",
-          value: new Date("2018-01-01"),
-          subfilters: null
-        },
-        {
-          id: "3",
-          name: "65 or older",
-          field: { name: "Birth_Date", type: "DATE" },
-          logic: "<",
-          value: new Date("1955-05-16"),
-          subfilters: null
-        },
-        {
-          id: "4",
-          name: "Registered Green, Non-Partisan, or Libertarian Party",
-          field: { name: "Party", type: "STRING" },
-          logic: "IN",
-          value: ["Green", "Non-Partisan", "Libertarian Party"],
-          subfilters: null
-        }
-      ],
+      subsets: [],
       subsetHighlighted: "all",
       filters: [
         {
@@ -210,7 +171,6 @@ export default class App extends React.Component {
         { name: "ID_Required", type: "BOOLEAN" }
       ],
 
-
       totalRecords: null
       // countFilterOpen: {state:false, ?}
     };
@@ -220,6 +180,7 @@ export default class App extends React.Component {
     this.closeAddEditSubset = this.closeAddEditSubset.bind(this);
     this.removeSubset = this.removeSubset.bind(this);
     this.onSubsetDone = this.onSubsetDone.bind(this);
+    this.refreshSubsets = this.refreshSubsets.bind(this);
 
     // Functions sent to <Filters>.
     this.onFilterChange = this.onFilterChange.bind(this);
@@ -266,11 +227,42 @@ export default class App extends React.Component {
 
     if (!prevState.addEditSubsetOpen && this.state.addEditSubsetOpen) {
       // Connect change in value from Firebase.
+      this.unsubscribe = window.store.collection(
+          'subsets').onSnapshot(this.refreshSubsets);
     }
 
     if (prevState.addEditSubsetOpen && !this.state.addEditSubsetOpen) {
-      // Disconnect Firebase.
+      // Give it two seconds to reflect the changes, and then
+      // disconnect Firebase.
+      setTimeout(this.unsubscribe, 2000);
     }
+  }
+
+  refreshSubsets(querySnapshot){
+    var subsets = [{
+      id: "all",
+      name: "Matching the above filters (all)",
+      field: null,
+      logic: null,
+      value: null,
+      subfilters: null
+    }], subset;
+    querySnapshot.forEach(function(subsetSnapshot) {
+      subset = subsetSnapshot.data();
+      subset.docID = subsetSnapshot.id;
+
+      subset.added = subset.added.toDate();
+      if (subset.value instanceof firebase.firestore.Timestamp)
+          subset.value = subset.value.toDate();
+
+      subsets.push(subset);
+    });
+
+    var sortedSubsets = subsets.sort((a, b) => {
+       return a.added - b.added;
+    });
+
+    this.setState({ subsets: sortedSubsets });
   }
 
   componentDidMount() {
@@ -280,6 +272,9 @@ export default class App extends React.Component {
         this.setState({ loggedIn: loggedIn });
       });
     }
+
+    // Get the subsets from firebase.
+    window.store.collection('subsets').get().then(this.refreshSubsets);
   }
 
   search() {
@@ -366,8 +361,14 @@ export default class App extends React.Component {
     this.setState({ countFilterOpen: null });
   }
 
-  addEditSubset(index) {
-    if (index && typeof index === Number) {
+  addEditSubset(id) {
+    if (typeof id === "string") {
+        this.setState({
+          addEditSubsetOpen: this.state.subsets.find(
+              subset => subset.id === id
+          )
+        });
+
     } else {
       var newSubset = {
         id: uuidv4(),
@@ -376,16 +377,14 @@ export default class App extends React.Component {
         field: null,
         logic: null,
         value: null,
-        subfilters: null
+        subfilters: null,
+        added: new Date()
       };
 
-      this.setState({
-        addEditSubsetOpen: {
-          index: this.state.subsets.length,
-          subset: newSubset
-        }
+      window.store.collection('subsets').add(newSubset).then(docRef => {
+          newSubset.docID = docRef.id;
+          this.setState({ addEditSubsetOpen: newSubset });
       });
-      // TODO: Add subset to Firebase.
     }
   }
 
@@ -394,13 +393,21 @@ export default class App extends React.Component {
   }
 
   onSubsetDone(id, keysValues) {
-    // TODO: Update subset on Firebase.
+    var subsetToUpdate = this.state.subsets.find(subset => subset.id === id);
+
+    // Make sure to delete docID.
+    delete keysValues.docID;
+
+    window.store.collection('subsets').doc(subsetToUpdate.docID).update(keysValues);
 
     this.closeAddEditSubset();
   }
 
-  removeSubset() {
-    // TODO: Remove subset in Firebase.
+  removeSubset(id) {
+    var subsetToDelete = this.state.subsets.find(subset => subset.id === id);
+    window.store.collection('subsets').doc(subsetToDelete.docID).delete().then(() => {
+        window.store.collection('subsets').get().then(this.refreshSubsets);
+    });
   }
 
   render() {
@@ -449,10 +456,11 @@ export default class App extends React.Component {
             closeAddSubset={this.closeAddEditSubset}
           />
           <SubsetEditor
-            open={this.state.addEditSubsetOpen}
+            subset={this.state.addEditSubsetOpen}
             onDone={this.onSubsetDone}
             onClose={this.closeAddEditSubset}
             fields={this.state.fields}
+            fieldValueOptions={this.state.fieldValueOptions}
           />
         </div>
         <div className="App_footer">
@@ -998,6 +1006,7 @@ class Dashboard extends React.Component {
                 highlighted={this.props.highlighted}
                 subsetClicked={this.props.subsetClicked}
                 addEdit={this.props.addEditSubset}
+                remove={this.props.removeSubset}
               />
             );
           })}
@@ -1023,15 +1032,15 @@ class SubsetEditor extends React.Component {
   }
 
   onSubsetTitleChange(event) {
-    this.setState({ title: event.target.value });
+    this.setState({ name: event.target.value });
   }
 
   onClickDone() {
-    var newSubset = this.state.filter || this.props.open.subset;
+    var newSubset = this.state.filter || this.props.subset;
 
-    if (this.state.title) newSubset.title = this.state.title;
+    if (this.state.name) newSubset.name = this.state.name;
 
-    this.props.onDone(this.props.open.index, newSubset);
+    this.props.onDone(this.props.subset.id, newSubset);
   }
 
   render() {
@@ -1042,14 +1051,14 @@ class SubsetEditor extends React.Component {
           icon="filter"
           onClose={this.props.onClose}
           title="Add / edit dashboard filter"
-          isOpen={this.props.open}
+          isOpen={this.props.subset}
           autoFocus={true}
           canEscapeKeyClose={true}
           canOutsideClickClose={true}
           enforceFocus={true}
         >
           <div className={Classes.DIALOG_BODY}>
-            {this.props.open ? (
+            {this.props.subset ? (
               <div>
                 <FormGroup
                   helperText="This phrase appears above the count of your filter on the main page in the results dashboard"
@@ -1061,7 +1070,7 @@ class SubsetEditor extends React.Component {
                     id="text-input"
                     placeholder="Enter a phrase"
                     onChange={this.onSubsetTitleChange}
-                    defaultValue={this.props.open.subset.title}
+                    defaultValue={this.props.subset.name}
                   />
                 </FormGroup>
 
@@ -1071,8 +1080,9 @@ class SubsetEditor extends React.Component {
                   labelInfo="(required)"
                 >
                   <Filter
-                    filter={this.props.open.subset}
+                    filter={this.props.subset}
                     fields={this.props.fields}
+                    fieldValueOptions={this.props.fieldValueOptions}
                     onFilterChange={this.onSubsetFilterChange}
                   />
                 </FormGroup>
@@ -1096,6 +1106,16 @@ class Subset extends React.Component {
   constructor(props) {
     super(props);
     this.onClick = this.onClick.bind(this);
+    this.onEditClick = this.onEditClick.bind(this);
+    this.onDeleteClick = this.onDeleteClick.bind(this);
+  }
+
+  onEditClick(){
+      this.props.addEdit(this.props.subset.id);
+  }
+
+  onDeleteClick(){
+    this.props.remove(this.props.subset.id);
   }
 
   onClick() {
@@ -1115,12 +1135,20 @@ class Subset extends React.Component {
       >
         {this.props.subset.id === "new" ? (
           <div className="Subset_body" onClick={this.props.addEdit}>
-            <div className="Subset_body_count">+</div>
+              <div className="Subset_body_content">
+                  <div className="Subset_body_content_count">+</div>
+              </div>
           </div>
         ) : (
-          <div className="Subset_body" onClick={this.onClick}>
-            <div className="Subset_body_label">{this.props.subset.name}</div>
-            <div className="Subset_body_count">{this.props.count}</div>
+          <div className="Subset_body">
+              {this.props.subset.id !== 'all' ? <div className="Subset_body_actions">
+                  <Button minimal={true} icon='edit' onClick={this.onEditClick} />
+                  <Button minimal={true} icon='trash' onClick={this.onDeleteClick} />
+              </div> : null}
+              <div className="Subset_body_content" onClick={this.onClick}>
+                <div className="Subset_body_content_label">{this.props.subset.name}</div>
+                <div className="Subset_body_content_count">{this.props.count}</div>
+            </div>
           </div>
         )}
       </div>
