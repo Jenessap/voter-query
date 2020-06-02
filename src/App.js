@@ -963,7 +963,19 @@ class CountFilterPopup extends React.Component {
                           ]}
                           // TODO fill in and hook these to show up
                           fieldValueOptions={{
-                            Election_Date: [],
+                            // Election_Date: [
+                            // 2020-06-09 (Primary 2020)
+                            // 2020-01-01 
+                            // 2018-11-06 (General 2018)
+                            // 2018-06-12 (Primary 2018)
+                            // 2016-11-08 (General 2016)
+                            // 2016-06-14 (Primary 2016)
+                            // 2014-11-04 (General 2014)
+                            // 2014-06-10 (Primary 2014)
+                            // 2012-11-06 (General 2012)
+                            // 2012-06-12 (Primary 2012)
+                            // 2011-09-13 (2nd Congressional District Special Election 2011)
+                            // ],
                             Vote_Code: [
                               "BR",
                               "EV",
