@@ -796,7 +796,8 @@ class Value extends React.Component {
       shortcuts: true,
       closeOnSelection: true,
       formatDate: date => (date === null ? "" : date.toLocaleDateString()),
-      parseDate: str => str ? new Date(Date.parse(str)) : new Date()
+      parseDate: str => str ? new Date(Date.parse(str)) : new Date(),
+      minDate: new Date('1900-01-1')
     };
 
     if (multiValueOperators.indexOf(this.props.logic) === -1) {
