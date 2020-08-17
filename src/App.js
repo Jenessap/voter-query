@@ -842,7 +842,9 @@ class Value extends React.Component {
           date: new Date('2012-06-13'),
           label: "Primary 2012"
         }
-      ],
+      ].map(dateLabel => {
+        dateLabel.date.setHours(dateLabel.date.getHours() + (dateLabel.date.getTimezoneOffset() / 60));
+      }),
       closeOnSelection: true,
       formatDate: date => (date === null ? "" : date.toLocaleDateString()),
       parseDate: str => str ? new Date(Date.parse(str)) : new Date(),
